@@ -69,7 +69,7 @@ vec3 CalcPointLight(vec3 normal, vec3 fragPos, vec3 viewDir)
   			     point.quadratic * (distance * distance));    
     
     // combine results
-    vec3 ambient  = pointColor * vec3(texture(texture_diffuse1, TexCoords));;
+    vec3 ambient  = pointColor * vec3(texture(texture_diffuse1, TexCoords));
     vec3 diffuse  = pointColor * diff * vec3(texture(texture_diffuse1, TexCoords));
     vec3 specular = pointColor * spec * vec3(0.3, 0.3, 0.3);
     ambient  *= attenuation;
