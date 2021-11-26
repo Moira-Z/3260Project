@@ -14,6 +14,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void cursor_position_callback(GLFWwindow* window, double x, double y);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 unsigned int loadCubemap(vector<std::string> faces);
 //void processInput(GLFWwindow* window);
 
@@ -24,6 +25,10 @@ const unsigned int SCR_HEIGHT = 720;
 struct keyControllor
 {
     float light_intensity = 0.6f;
+    int up = 0;
+    int down = 0;
+    int left = 0;
+    int right = 0;
     float position_x = 0.0f;
     float position_z = 0.0f;
     float rotate = 0.0f;
@@ -31,17 +36,15 @@ struct keyControllor
 
 struct mouseControllor
 {
-    int LEFT_BUTTON = 0;
-    int click_time;
-    double lastX = 0, lastY = 0;
-    double yaw = 0.0;
-    double pitch = 0.0;
+    double lastX = -1.0f;
+    double yaw = 0.0f;
+    double pitch = 0.0f;
 };
 
 keyControllor keyCtl;
 mouseControllor mouseCtl;
 unsigned int skyboxVAO;
-float fov = 45.0f;
+float fov = 60.0f;
 
 // timing
 float deltaTime = 0.0f;
@@ -132,6 +135,7 @@ int main()
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -201,11 +205,16 @@ int main()
         shader.use();
 
         // view matrix
-        glm::vec3 eyePosition(0.0f + mouseCtl.yaw, 10.0f + mouseCtl.pitch, 20.0f);
+        float angle = -glm::atan(mouseCtl.yaw / 20.0);
+        glm::vec3 eyePosition(keyCtl.position_x * glm::cos(angle) + keyCtl.position_z * glm::sin(angle) + 1.19f * glm::sin(angle), 
+                             1.2f, 
+                              keyCtl.position_z * glm::cos(angle) - keyCtl.position_x * glm::sin(angle) + 1.19f * glm::cos(angle));
         shader.setVec3("eyePositionWorld", eyePosition);
 
         glm::mat4 viewMatrix = glm::lookAt(eyePosition,
-            glm::vec3(0.0f, 3.0f, 0.0f),
+            glm::vec3(keyCtl.position_x * glm::cos(angle) + keyCtl.position_z * glm::sin(angle), 
+                      0.8f, 
+                      keyCtl.position_z * glm::cos(angle) - keyCtl.position_x * glm::sin(angle)),
             glm::vec3(0.0f, 1.0f, 0.0f));
         shader.setMat4("view", viewMatrix);
 
@@ -214,45 +223,49 @@ int main()
         shader.setMat4("projection", projectionMatrix);
 
         // point light
-        glm::vec3 position(-2.0f, 10.0f, 20.0f);
+        glm::vec3 position(-2.0f, 5.0f, 10.0f);
         shader.setVec3("pointPosition", position);
         glm::vec3 pointColor(1.0f, 1.0f, 1.0f);
         shader.setVec3("pointColor", pointColor);
-        shader.setFloat("point.constant", 1.0);
-        shader.setFloat("point.linear", 0.01);
-        shader.setFloat("point.quadratic", 0.0);
+        shader.setFloat("point.constant", 1.0f);
+        shader.setFloat("point.linear", 0.01f);
+        shader.setFloat("point.quadratic", 0.0f);
 
 
         // render the loaded model
         //spacecraft
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -200.0f, 0.0f)); // translate it down so it's at the center of the scene
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f, 0.01f, 0.01f));	// it's a bit too big for our scene, so scale it down
-        glm::mat4 rotateMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = scaleMatrix * translateMatrix;
+        glm::mat4 translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f)); // translate it down so it's at the center of the scene
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.001f, 0.001f, 0.001f));	// it's a bit too big for our scene, so scale it down
+        glm::mat4 rotateMatrix1 = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));       
+        glm::mat4 rotateMatrix2 = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 translateMatrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(keyCtl.position_x, 0.0f, keyCtl.position_z));
+        
+        model = rotateMatrix2 * translateMatrix2 * translateMatrix1 * scaleMatrix * rotateMatrix1;
         shader.setMat4("model", model);
         spacecraft.Draw(shader);
 
         //planet
-        translateMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -50.0f));
-        model = translateMatrix * rotateMatrix;
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -50.0f));
+        rotateMatrix1 = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model =  translateMatrix1  * rotateMatrix1;
         shader.setMat4("model", model);
         planet.Draw(shader);
 
         // 3 vehicles
-        translateMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 7.0f, -40.0f));
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, -40.0f));
         scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 0.3f));
-        model = translateMatrix * scaleMatrix;
+        model = translateMatrix1 * scaleMatrix;
         shader.setMat4("model", model);
         vehicle.Draw(shader);
 
-        translateMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, -10.0f, -35.0f));
-        model = translateMatrix * scaleMatrix;
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, -35.0f));
+        model = translateMatrix1 * scaleMatrix;
         shader.setMat4("model", model);
         vehicle.Draw(shader);
 
-        translateMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, -40.0f));
-        model = translateMatrix * scaleMatrix;
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, -40.0f));
+        model = translateMatrix1 * scaleMatrix;
         shader.setMat4("model", model);
         vehicle.Draw(shader);
 
@@ -314,51 +327,43 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     // Sets the mouse-button callback for the current window.	
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-    {
-        mouseCtl.LEFT_BUTTON = 1;
-    }
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-    {
-        mouseCtl.LEFT_BUTTON = 0;
-        mouseCtl.lastX = 0; //reset
-    }
+    //if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    //{
+    //    mouseCtl.LEFT_BUTTON = 1;
+    //}
+    //if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    //{
+    //    mouseCtl.LEFT_BUTTON = 0;
+    //    mouseCtl.lastX = 0; //reset
+    //}
 }
 
 void cursor_position_callback(GLFWwindow* window, double x, double y)
 {
     //// Sets the cursor position callback for the current window
-    if (mouseCtl.LEFT_BUTTON)
-    {
-        // check whether requiring initialization
-        if (mouseCtl.lastX == 0)
-        {
-            mouseCtl.lastX = x;
-            mouseCtl.lastY = y;
-            return;
-        }
-
-        double xoffset = x - mouseCtl.lastX;
-        double yoffset = mouseCtl.lastY - y;
+    if(mouseCtl.lastX == -1)
         mouseCtl.lastX = x;
-        mouseCtl.lastY = y;
+    double xoffset = x - mouseCtl.lastX;
+    //double yoffset = mouseCtl.lastY - y;
+    mouseCtl.lastX = x;
+    //mouseCtl.lastY = y;
 
-        float sensitivity = 0.1f;
-        xoffset *= sensitivity;
-        yoffset *= sensitivity;
+    float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    //yoffset *= sensitivity;
 
-        mouseCtl.yaw += xoffset;
-        mouseCtl.pitch += yoffset;
+    mouseCtl.yaw += xoffset;
+    //mouseCtl.pitch += yoffset;
 
-        if (mouseCtl.pitch > 10.0f)
-            mouseCtl.pitch = 10.0f;
-        if (mouseCtl.pitch < -6.0f)
-            mouseCtl.pitch = -6.0f;
-        if (mouseCtl.yaw > 15.0f)
-            mouseCtl.yaw = 15.0f;
-        if (mouseCtl.yaw < -15.0f)
-            mouseCtl.yaw = -15.0f;
-    }
+    /*if (mouseCtl.pitch > 10.0f)
+        mouseCtl.pitch = 10.0f;
+    if (mouseCtl.pitch < -6.0f)
+       mouseCtl.pitch = -6.0f;*/
+    if (mouseCtl.yaw > 15.0f)
+        mouseCtl.yaw = 15.0f;
+    if (mouseCtl.yaw < -15.0f)
+        mouseCtl.yaw = -15.0f;
+    
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
@@ -372,6 +377,52 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
         fov = 1.0f;
     if (fov > 45.0f)
         fov = 45.0f;
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    // Sets the Keyboard callback for the current window.
+    if (keyCtl.left == 1)
+        keyCtl.position_x -= 0.1f;
+    if (keyCtl.right == 1)
+        keyCtl.position_x += 0.1f;
+    if (keyCtl.up == 1)
+        keyCtl.position_z -= 0.1f;
+    if (keyCtl.down == 1)
+        keyCtl.position_z += 0.1f;
+    if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+    {
+        keyCtl.left = 1;
+    }
+    if (key == GLFW_KEY_LEFT && action == GLFW_RELEASE)
+    {
+        keyCtl.left = 0;       
+    }
+    if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+    {
+        keyCtl.right = 1;
+    }
+    if (key == GLFW_KEY_RIGHT && action == GLFW_RELEASE)
+    {
+        keyCtl.right = 0;
+    }
+    if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+    {
+        keyCtl.up = 1;
+    }
+    if (key == GLFW_KEY_UP && action == GLFW_RELEASE)
+    {
+        keyCtl.up = 0;
+    }
+    if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+    {
+        keyCtl.down = 1;
+    }
+    if (key == GLFW_KEY_DOWN && action == GLFW_RELEASE)
+    {
+        keyCtl.down = 0;
+    }
+    
 }
 
 unsigned int loadCubemap(vector<std::string> faces)
