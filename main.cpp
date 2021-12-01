@@ -53,10 +53,15 @@ float last_position_z = 0.0f;
 const int amount = 200;
 glm::mat4 modelMatrices[amount];
 
+// num of gold collected
+int numOfGoldCollected = 0;
+// whether is collected
+int goldColl[5] = { 0,0,0,0,0 };
+
 // move
-int move1 = RandomNum(10);
-int move2 = RandomNum(10);
-int move3 = RandomNum(10);
+int move1 = RandomNum(12);
+int move2 = RandomNum(15);
+int move3 = RandomNum(12);
 
 // timing
 float deltaTime = 0.0f;
@@ -158,9 +163,8 @@ int RandomNum(int maxiNum) {
     return rand() % rangX - maxiNum;
 }
 
-float threshold = 10;
-bool CollisionDetection(glm::vec4 vectorA, glm::vec4 vectorB) {
-    if (glm::distance(vectorA, vectorB) >= threshold)
+bool CollisionDetection(glm::vec4 vectorA, glm::vec4 vectorB, int dis) {
+    if (glm::distance(vectorA, vectorB) <= dis)
         return true;
     else
         return false;
@@ -220,11 +224,13 @@ int main()
 
     // load models
     // -----------
-    Model spacecraft("object/spacecraft/spacecraft.obj");
+    Model spacecraft1("object/spacecraft/spacecraft.obj");
+    Model spacecraft2("object/spacecraft/spacecraft2.obj");
     Model planet("object/planet/planet.obj");
     Model vehicle1("object/vehicles/craft.obj");
     Model vehicle2("object/vehicles/craft2.obj");
     Model rock("object/rock/rock.obj");
+    Model gold("object/rock/rock2.obj");
 
     // create skybox
     createSkybox();
@@ -253,7 +259,6 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         float timer = deltaTime * 150;
-        printf("[%f]", timer);
 
         // input
         // -----
@@ -318,7 +323,12 @@ int main()
         glm::mat4 craftmodel = translateMatrix3 * translateMatrix2 * rotateMatrix2 * translateMatrix1 * scaleMatrix * rotateMatrix1;
         shader.setMat4("model", craftmodel);
         shader.setBool("normal_flag", 0);
-        spacecraft.Draw(shader);
+        if (numOfGoldCollected == 5) {
+            spacecraft2.Draw(shader);
+        }
+        else {
+            spacecraft1.Draw(shader);
+        }
 
         //planet
         translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -50.0f));
@@ -327,7 +337,7 @@ int main()
         scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(-1.0f, 1.0f, 1.0f));
         model =  translateMatrix1 * scaleMatrix * rotateMatrix2 * rotateMatrix1;
         shader.setMat4("model", model);
-        if(keyCtl.normal)
+        //if(keyCtl.normal)
         shader.setBool("normal_flag", 1);
         planet.Draw(shader);
         shader.setBool("normal_flag", 0);
@@ -351,7 +361,7 @@ int main()
         model = translateMatrix1 * scaleMatrix * rotateMatrix2;
         shader.setMat4("model", model);
         
-        if (CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1))) {
+        if (!CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1), 5)) {
             vehicle1.Draw(shader);
         }
         else {
@@ -361,7 +371,7 @@ int main()
         translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(move2, 0.0f, -25.0f));
         model = translateMatrix1 * scaleMatrix * rotateMatrix2;
         shader.setMat4("model", model);
-        if (CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1))) {
+        if (!CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1), 5)) {
             vehicle1.Draw(shader);
         }
         else {
@@ -371,7 +381,7 @@ int main()
         translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(move3, 0.0f, -40.0f));
         model = translateMatrix1 * scaleMatrix * rotateMatrix2;
         shader.setMat4("model", model);
-        if (CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1))) {
+        if (!CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1), 5)) {
             vehicle1.Draw(shader);
         }
         else {
@@ -383,12 +393,26 @@ int main()
         glm::mat4 rockOrbit_M = glm::rotate(rockOrbitIni, glm::radians(currentFrame * 2), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 rockModelMat_temp;
 
+        // calculate the distance between gold and aircraft
+        for (int i = 0; i < 5; i++) {
+            if (goldColl[i] == 0 && CollisionDetection(rockOrbit_M * modelMatrices[i * 40] * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1), 1))
+            {
+                goldColl[i] = 1;
+                numOfGoldCollected++;
+            }
+        }
         for (GLuint i = 0; i < amount; i++) {
             rockModelMat_temp = modelMatrices[i];
             rockModelMat_temp = rockOrbit_M * rockModelMat_temp;
 
             shader.setMat4("model", rockModelMat_temp);
-            rock.Draw(shader);
+            if (i % 40 == 0) {
+                if (goldColl[i / 40] == 0)
+                    gold.Draw(shader);
+            }
+            else {
+                rock.Draw(shader);
+            }
         }
 
         // skybox
@@ -527,22 +551,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (keyCtl.left == 1)
     {
         keyCtl.last_position_x = keyCtl.position_x;
-        keyCtl.position_x -= 0.05f;
+        keyCtl.position_x -= 0.04f;
     }
     if (keyCtl.right == 1)
     {
         keyCtl.last_position_x = keyCtl.position_x;
-        keyCtl.position_x += 0.05f;
+        keyCtl.position_x += 0.04f;
     }
     if (keyCtl.up == 1)
     {
         keyCtl.last_position_z = keyCtl.position_z;
-        keyCtl.position_z -= 0.05f;
+        keyCtl.position_z -= 0.04f;
     }
     if (keyCtl.down == 1)
     {
         keyCtl.last_position_z = keyCtl.position_z;
-        keyCtl.position_z += 0.05f;
+        keyCtl.position_z += 0.04f;
     }
 }
 
