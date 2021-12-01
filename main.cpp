@@ -16,6 +16,7 @@ void cursor_position_callback(GLFWwindow* window, double x, double y);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 unsigned int loadCubemap(vector<std::string> faces);
+int RandomNum(int maxiNum);
 void processInput(GLFWwindow* window);
 
 // settings
@@ -53,13 +54,14 @@ const int amount = 200;
 glm::mat4 modelMatrices[amount];
 
 // move
-int move1 = 0;
-int move2 = 0;
-int move3 = 0;
+int move1 = RandomNum(10);
+int move2 = RandomNum(10);
+int move3 = RandomNum(10);
 
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+int flag = -1;
 
 void createSkybox()
 {
@@ -156,10 +158,8 @@ int RandomNum(int maxiNum) {
     return rand() % rangX - maxiNum;
 }
 
-float threshold = 5;
+float threshold = 10;
 bool CollisionDetection(glm::vec4 vectorA, glm::vec4 vectorB) {
-    std::cout << "glm::distance(vectorA,vectorB)" << glm::distance(vectorA, vectorB) << std::endl;
-
     if (glm::distance(vectorA, vectorB) >= threshold)
         return true;
     else
@@ -252,7 +252,8 @@ int main()
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        float timer = deltaTime * 0.005;
+        float timer = deltaTime * 150;
+        printf("[%f]", timer);
 
         // input
         // -----
@@ -299,8 +300,7 @@ int main()
 
 
         // render the loaded model
-        //spacecraft
-        
+        //spacecraft       
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f)); // translate it up
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.001f, 0.001f, 0.001f));	// scale it down
@@ -323,7 +323,7 @@ int main()
         //planet
         translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -50.0f));
         rotateMatrix1 = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        rotateMatrix2 = glm::rotate(glm::mat4(1.0f), glm::radians(timer), glm::vec3(0.0f, 1.0f, 0.0f));
+        rotateMatrix2 = glm::rotate(glm::mat4(1.0f), glm::radians(currentFrame), glm::vec3(0.0f, 1.0f, 0.0f));
         scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(-1.0f, 1.0f, 1.0f));
         model =  translateMatrix1 * scaleMatrix * rotateMatrix2 * rotateMatrix1;
         shader.setMat4("model", model);
@@ -333,15 +333,21 @@ int main()
         shader.setBool("normal_flag", 0);
 
         // 3 vehicles
-        if (((int)currentFrame) % 1000 > 990) {
-
-            move1 = RandomNum(10);
-            move2 = RandomNum(20);
-            move3 = RandomNum(10);
+        int current = (int) 2 * currentFrame;
+        if (current % 2 == 1)
+        {
+            int flag2 = current / 2;
+            if ( flag2 > flag)
+            {
+                move1 = RandomNum(10);
+                move2 = RandomNum(10);
+                move3 = RandomNum(10);
+                flag = flag2;    
+            }
         }
-        std::cout << currentFrame << std::endl;
-        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f + move1, 0.0f, -40.0f));
-        scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 0.3f));
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(move1, 0.0f, -12.0f));
+        scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
+        rotateMatrix2 = glm::rotate(glm::mat4(1.0f), glm::radians(currentFrame * 2), glm::vec3(0.0f, 1.0f, 0.0f));
         model = translateMatrix1 * scaleMatrix * rotateMatrix2;
         shader.setMat4("model", model);
         
@@ -352,7 +358,7 @@ int main()
             vehicle2.Draw(shader);
         }
 
-        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f + move2, 0.0f, -35.0f));
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(move2, 0.0f, -25.0f));
         model = translateMatrix1 * scaleMatrix * rotateMatrix2;
         shader.setMat4("model", model);
         if (CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1))) {
@@ -362,7 +368,7 @@ int main()
             vehicle2.Draw(shader);
         }
 
-        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f + move3, 0.0f, -40.0f));
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(move3, 0.0f, -40.0f));
         model = translateMatrix1 * scaleMatrix * rotateMatrix2;
         shader.setMat4("model", model);
         if (CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1))) {
@@ -373,8 +379,8 @@ int main()
         }
 
         // rock
-        glm::mat4 rockOrbitIni = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -50.0f));
-        glm::mat4 rockOrbit_M = glm::rotate(rockOrbitIni, glm::radians(timer * 2), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 rockOrbitIni = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, -50.0f));
+        glm::mat4 rockOrbit_M = glm::rotate(rockOrbitIni, glm::radians(currentFrame * 2), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 rockModelMat_temp;
 
         for (GLuint i = 0; i < amount; i++) {
