@@ -21,6 +21,9 @@ uniform vec3 pointPosition;
 uniform vec3 pointColor;
 uniform vec3 eyePositionWorld;
 uniform sampler2D texture_diffuse1;
+// normal mapping for the planet
+uniform sampler2D texture_normal2;
+uniform bool normal_flag;
 
 vec3 CalcDirLight(vec3 normal, vec3 viewDir); 
 vec3 CalcPointLight(vec3 normal, vec3 fragPos, vec3 viewDir);
@@ -28,10 +31,18 @@ vec3 CalcPointLight(vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {    
     vec3 viewDir = normalize(eyePositionWorld - vertexPositionWorld);
+
+    // normal mapping
+    vec3 normal = normalize(normalWorld);
+    if(normal_flag)
+    {
+        normal = texture(texture_normal2, TexCoords).rgb;
+        normal = normalize(normal * 2.0 - 1.0);
+    }
     
     vec3 res = vec3(0.0);
 
-    res += CalcPointLight(normalWorld, vertexPositionWorld, viewDir);
+    res += CalcPointLight(normal, vertexPositionWorld, viewDir);
 
     FragColor = vec4(res, 1.0);
 }
