@@ -21,7 +21,7 @@ uniform vec3 pointPosition;
 uniform vec3 pointColor;
 uniform vec3 eyePositionWorld;
 uniform sampler2D texture_diffuse1;
-// normal mapping for the planet
+//  normal mapping for the planet
 uniform sampler2D texture_normal2;
 uniform bool normal_flag;
 

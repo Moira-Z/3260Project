@@ -366,7 +366,7 @@ void cursor_position_callback(GLFWwindow* window, double x, double y)
     //mouseCtl.pitch += yoffset; 
 }
 
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+//  glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
