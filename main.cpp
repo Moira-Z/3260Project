@@ -54,9 +54,9 @@ const int amount = 200;
 glm::mat4 modelMatrices[amount];
 
 // move
-int move1 = RandomNum(10);
-int move2 = RandomNum(10);
-int move3 = RandomNum(10);
+int move1 = RandomNum(12);
+int move2 = RandomNum(15);
+int move3 = RandomNum(12);
 
 // timing
 float deltaTime = 0.0f;
@@ -158,7 +158,7 @@ int RandomNum(int maxiNum) {
     return rand() % rangX - maxiNum;
 }
 
-float threshold = 10;
+float threshold = 5;
 bool CollisionDetection(glm::vec4 vectorA, glm::vec4 vectorB) {
     if (glm::distance(vectorA, vectorB) >= threshold)
         return true;
@@ -253,8 +253,6 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         float timer = deltaTime * 150;
-        printf("[%f]", timer);
-
         // input
         // -----
         processInput(window);
@@ -327,7 +325,7 @@ int main()
         scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(-1.0f, 1.0f, 1.0f));
         model =  translateMatrix1 * scaleMatrix * rotateMatrix2 * rotateMatrix1;
         shader.setMat4("model", model);
-        if(keyCtl.normal)
+        //if(keyCtl.normal)
         shader.setBool("normal_flag", 1);
         planet.Draw(shader);
         shader.setBool("normal_flag", 0);
@@ -339,9 +337,9 @@ int main()
             int flag2 = current / 2;
             if ( flag2 > flag)
             {
-                move1 = RandomNum(10);
-                move2 = RandomNum(10);
-                move3 = RandomNum(10);
+                move1 = RandomNum(12);
+                move2 = RandomNum(15);
+                move3 = RandomNum(12);
                 flag = flag2;    
             }
         }
@@ -368,7 +366,7 @@ int main()
             vehicle2.Draw(shader);
         }
 
-        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(move3, 0.0f, -40.0f));
+        translateMatrix1 = glm::translate(glm::mat4(1.0f), glm::vec3(move3, 0.0f, -35.0f));
         model = translateMatrix1 * scaleMatrix * rotateMatrix2;
         shader.setMat4("model", model);
         if (CollisionDetection(model * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1))) {

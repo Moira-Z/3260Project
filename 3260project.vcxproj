@@ -148,19 +148,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
-    <ClCompile Include="源.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="readme.txt" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="Camera.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="FragmentShaderCode.glsl" />
+    <None Include="skyboxFragment.glsl" />
+    <None Include="skyboxVertex.glsl" />
     <None Include="VertexShaderCode.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

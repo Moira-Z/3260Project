@@ -15,17 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="源.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="glad.c">
       <Filter>源文件</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="readme.txt">
-      <Filter>源文件</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
@@ -37,15 +32,18 @@
     <ClInclude Include="Model.h">
       <Filter>源文件</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="FragmentShaderCode.glsl">
       <Filter>源文件</Filter>
     </None>
     <None Include="VertexShaderCode.glsl">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="skyboxFragment.glsl">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="skyboxVertex.glsl">
       <Filter>源文件</Filter>
     </None>
   </ItemGroup>
