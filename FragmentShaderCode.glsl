@@ -41,7 +41,7 @@ void main()
     }
     
     vec3 res = vec3(0.0);
-
+    res += CalcDirLight(normal,viewDir);
     res += CalcPointLight(normal, vertexPositionWorld, viewDir);
 
     FragColor = vec4(res, 1.0);

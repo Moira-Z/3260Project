@@ -54,11 +54,11 @@ const int amount = 200;
 glm::mat4 modelMatrices[amount];
 
 // num of gold collected
-int numOfGoldCollected = 0;
+int numOfTreasureCollected = 0;
 // whether is collected
-int goldColl[5] = { 0,0,0,0,0 };
+int treasureColl[8] = { 1, 1, 1, 1, 1, 2, 2, 2}; // 1 for gold and 2 for diamond
 
-// move
+// random position of vehicles
 int move1 = RandomNum(12);
 int move2 = RandomNum(15);
 int move3 = RandomNum(12);
@@ -231,6 +231,7 @@ int main()
     Model vehicle2("object/vehicles/craft2.obj");
     Model rock("object/rock/rock.obj");
     Model gold("object/rock/rock2.obj");
+    Model diamond("object/diamond/diamond.obj");
 
     // create skybox
     createSkybox();
@@ -295,14 +296,21 @@ int main()
         shader.setMat4("projection", projectionMatrix);
 
         // point light
-        glm::vec3 position(0.0f, 10.0f, -50.0f);
+        glm::vec3 position(0.0f, 5.0f, -55.0f);
         shader.setVec3("pointPosition", position);
         glm::vec3 pointColor(1.0f, 1.0f, 1.0f);
         shader.setVec3("pointColor", pointColor);
         shader.setFloat("point.constant", 1.0f);
-        shader.setFloat("point.linear", 0.01f);
-        shader.setFloat("point.quadratic", 0.0f);
+        shader.setFloat("point.linear", 0.04f);
+        shader.setFloat("point.quadratic", 0.01f);
 
+        // parallel light source
+            glm::vec3 dirDirection(0.0f, -1.0f, 0.0f);
+            shader.setVec3("dirDirection", dirDirection);
+            glm::vec3 dirColor(1.0f, 1.0f, 1.0f);
+            shader.setVec3("dirColor", dirColor);
+            float intensity = 0.5f;
+            shader.setFloat("intensity", intensity);
 
         // render the loaded model
         //spacecraft       
@@ -323,7 +331,7 @@ int main()
         glm::mat4 craftmodel = translateMatrix3 * translateMatrix2 * rotateMatrix2 * translateMatrix1 * scaleMatrix * rotateMatrix1;
         shader.setMat4("model", craftmodel);
         shader.setBool("normal_flag", 0);
-        if (numOfGoldCollected == 5) {
+        if (numOfTreasureCollected == 8) {
             spacecraft2.Draw(shader);
         }
         else {
@@ -337,7 +345,7 @@ int main()
         scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(-1.0f, 1.0f, 1.0f));
         model =  translateMatrix1 * scaleMatrix * rotateMatrix2 * rotateMatrix1;
         shader.setMat4("model", model);
-        //if(keyCtl.normal)
+        if(keyCtl.normal % 2 == 1)
         shader.setBool("normal_flag", 1);
         planet.Draw(shader);
         shader.setBool("normal_flag", 0);
@@ -394,11 +402,11 @@ int main()
         glm::mat4 rockModelMat_temp;
 
         // calculate the distance between gold and aircraft
-        for (int i = 0; i < 5; i++) {
-            if (goldColl[i] == 0 && CollisionDetection(rockOrbit_M * modelMatrices[i * 40] * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1), 1))
+        for (int i = 0; i < 8; i++) {
+            if (treasureColl[i] > 0 && CollisionDetection(rockOrbit_M * modelMatrices[i * 25] * glm::vec4(0, 0, 0, 1), craftmodel * glm::vec4(0, 0, 0, 1), 2))
             {
-                goldColl[i] = 1;
-                numOfGoldCollected++;
+                treasureColl[i] = 0;
+                numOfTreasureCollected++;
             }
         }
         for (GLuint i = 0; i < amount; i++) {
@@ -406,9 +414,11 @@ int main()
             rockModelMat_temp = rockOrbit_M * rockModelMat_temp;
 
             shader.setMat4("model", rockModelMat_temp);
-            if (i % 40 == 0) {
-                if (goldColl[i / 40] == 0)
+            if (i % 25 == 0) {
+                if (treasureColl[i / 25] == 1)
                     gold.Draw(shader);
+                if (treasureColl[i / 25] == 2)
+                    diamond.Draw(shader);
             }
             else {
                 rock.Draw(shader);
@@ -510,7 +520,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Sets the Keyboard callback for the current window.
     if (key == GLFW_KEY_Y && action == GLFW_PRESS)
     {
-        keyCtl.normal = 1;
+        keyCtl.normal += 1;
     }
     if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
     {
